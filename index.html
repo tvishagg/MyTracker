@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calorie Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Calorie Tracker 🥗</h1>
+            <nav>
+                <button id="log-tab-btn" class="tab-btn active">Log</button>
+                <button id="budget-tab-btn" class="tab-btn">Budgets</button>
+            </nav>
+        </header>
+
+        <main>
+            <div id="log-view">
+                <div class="grid grid-cols-4 summary-grid">
+                    <div class="card stat-card">
+                        <h4>Calories Eaten</h4>
+                        <p><span id="total-cals">0</span> / <span id="total-cals-budget">2000</span> cal</p>
+                        <div class="progress-ring-container">
+                             <div class="progress-ring" id="cals-eaten-ring">
+                                <span class="progress-ring-text" id="cals-eaten-percent">0%</span>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <h4>Calories Burned</h4>
+                        <p><span id="total-burned">0</span> / <span id="burn-goal">500</span> cal</p>
+                        <div class="progress-ring-container">
+                            <div class="progress-ring" id="cals-burned-ring">
+                               <span class="progress-ring-text" id="cals-burned-percent">0%</span>
+                            </div>
+                       </div>
+                    </div>
+                    <div class="card stat-card">
+                        <h4>Net Calories</h4>
+                        <p class="large-text" id="net-calories">0</p>
+                        <span>cal</span>
+                    </div>
+                    <div class="card stat-card">
+                        <h4>Calorie Deficit</h4>
+                        <p class="large-text" id="calorie-deficit">0</p>
+                        <span>from TDEE</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3">
+                    <div class="card">
+                        <h3 class="card-title">Add Food Item</h3>
+                        <form id="add-food-form">
+                            <select id="food-meal-select">
+                                <option value="breakfast">Breakfast</option>
+                                <option value="morningSnack">Morning Snack</option>
+                                <option value="lunch">Lunch</option>
+                                <option value="eveningSnack">Evening Snack</option>
+                                <option value="dinner">Dinner</option>
+                            </select>
+                            <input type="text" id="food-name-input" placeholder="Food name" required>
+                            <div class="grid grid-cols-2">
+                                <input type="number" id="food-calories-input" placeholder="Calories" required>
+                                <input type="number" id="food-protein-input" placeholder="Protein (g)">
+                                <input type="number" id="food-carbs-input" placeholder="Carbs (g)">
+                                <input type="number" id="food-fat-input" placeholder="Fat (g)">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Food</button>
+                        </form>
+                    </div>
+
+                    <div class="card grid-span-2">
+                        <h3 class="card-title">Daily Summary</h3>
+                        <div class="summary-section">
+                            <label for="total-burned-input">Total Calories Burned Today (Activity)</label>
+                            <div class="input-group">
+                                <input type="number" id="total-burned-input" value="0">
+                                <span>cal</span>
+                            </div>
+                        </div>
+                        <div class="summary-section" id="macro-summary">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 meal-grid">
+                    <div class="card meal-card">
+                        <div class="meal-header">
+                            <h3>Breakfast</h3>
+                            <span id="breakfast-cals">0/400 cal</span>
+                        </div>
+                        <div class="food-list" id="breakfast-list"></div>
+                        <div class="progress-bar"><div id="breakfast-progress"></div></div>
+                    </div>
+                    <div class="card meal-card">
+                        <div class="meal-header">
+                            <h3>Morning Snack</h3>
+                            <span id="morningSnack-cals">0/200 cal</span>
+                        </div>
+                        <div class="food-list" id="morningSnack-list"></div>
+                        <div class="progress-bar"><div id="morningSnack-progress"></div></div>
+                    </div>
+                    <div class="card meal-card">
+                        <div class="meal-header">
+                            <h3>Lunch</h3>
+                            <span id="lunch-cals">0/600 cal</span>
+                        </div>
+                        <div class="food-list" id="lunch-list"></div>
+                        <div class="progress-bar"><div id="lunch-progress"></div></div>
+                    </div>
+                    <div class="card meal-card">
+                        <div class="meal-header">
+                            <h3>Evening Snack</h3>
+                            <span id="eveningSnack-cals">0/200 cal</span>
+                        </div>
+                        <div class="food-list" id="eveningSnack-list"></div>
+                        <div class="progress-bar"><div id="eveningSnack-progress"></div></div>
+                    </div>
+                    <div class="card meal-card">
+                        <div class="meal-header">
+                            <h3>Dinner</h3>
+                            <span id="dinner-cals">0/600 cal</span>
+                        </div>
+                        <div class="food-list" id="dinner-list"></div>
+                        <div class="progress-bar"><div id="dinner-progress"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="budget-view" class="hidden">
+                 <div class="card">
+                    <div class="budget-header">
+                        <h2>Set Your Budgets</h2>
+                        <div>
+                            <button id="cancel-budget-btn" class="btn hidden">Cancel</button>
+                            <button id="edit-budget-btn" class="btn">Edit Budgets</button>
+                            <button id="save-budget-btn" class="btn btn-primary hidden">Save Changes</button>
+                        </div>
+                    </div>
+                    <form id="budget-form" class="grid grid-cols-3">
+                        <fieldset name="general" disabled>
+                            <legend>General</legend>
+                            <label for="budget-total-cals">Total Daily Calorie Budget</label>
+                            <input type="number" id="budget-total-cals" value="2000">
+                             <label for="budget-tdee">TDEE (Total Daily Energy Expenditure)</label>
+                            <input type="number" id="budget-tdee" value="2500">
+                             <label for="budget-burn-goal">Daily Activity Burn Goal</label>
+                            <input type="number" id="budget-burn-goal" value="500">
+                        </fieldset>
+                        <fieldset name="meals" disabled>
+                            <legend>Meal Budgets (Calories)</legend>
+                            <label for="budget-breakfast">Breakfast</label>
+                            <input type="number" id="budget-breakfast" value="400">
+                            <label for="budget-morningSnack">Morning Snack</label>
+                            <input type="number" id="budget-morningSnack" value="200">
+                            <label for="budget-lunch">Lunch</label>
+                            <input type="number" id="budget-lunch" value="600">
+                            <label for="budget-eveningSnack">Evening Snack</label>
+                            <input type="number" id="budget-eveningSnack" value="200">
+                            <label for="budget-dinner">Dinner</label>
+                            <input type="number" id="budget-dinner" value="600">
+                        </fieldset>
+                        <fieldset name="macros" disabled>
+                            <legend>Macro Budgets (Grams)</legend>
+                            <label for="budget-protein">Protein</label>
+                            <input type="number" id="budget-protein" value="150">
+                            <label for="budget-carbs">Carbs</label>
+                            <input type="number" id="budget-carbs" value="200">
+                             <label for="budget-fat">Fat</label>
+                            <input type="number" id="budget-fat" value="67">
+                        </fieldset>
+                    </form>
+                 </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
