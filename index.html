@@ -5,16 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calorie Tracker</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
     <div class="container">
         <header>
             <h1>Calorie Tracker 🥗</h1>
-            <nav>
-                <button id="log-tab-btn" class="tab-btn active">Log</button>
-                <button id="budget-tab-btn" class="tab-btn">Budgets</button>
-            </nav>
+            <div class="header-controls">
+                <button id="export-btn" class="btn">Export Day's Log</button>
+                <nav>
+                    <button id="log-tab-btn" class="tab-btn active">Log</button>
+                    <button id="budget-tab-btn" class="tab-btn">Budgets</button>
+                </nav>
+            </div>
         </header>
 
         <main>
@@ -67,6 +71,7 @@
                                 <input type="number" id="food-protein-input" placeholder="Protein (g)">
                                 <input type="number" id="food-carbs-input" placeholder="Carbs (g)">
                                 <input type="number" id="food-fat-input" placeholder="Fat (g)">
+                                <input type="number" id="food-fiber-input" placeholder="Fiber (g)">
                             </div>
                             <button type="submit" class="btn btn-primary">Add Food</button>
                         </form>
@@ -169,8 +174,10 @@
                             <input type="number" id="budget-protein" value="150">
                             <label for="budget-carbs">Carbs</label>
                             <input type="number" id="budget-carbs" value="200">
-                             <label for="budget-fat">Fat</label>
+                            <label for="budget-fat">Fat</label>
                             <input type="number" id="budget-fat" value="67">
+                            <label for="budget-fiber">Fiber</label>
+                            <input type="number" id="budget-fiber" value="30">
                         </fieldset>
                     </form>
                  </div>
