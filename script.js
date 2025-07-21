@@ -1,34 +1,68 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Application State
-    const state = {
-        activeTab: 'log',
-        totalBurned: 0,
-        budgets: {
-            totalCalorieBudget: 2000,
-            burnGoal: 500,
-            tdee: 2500,
-            mealBudgets: {
-                breakfast: 400,
-                morningSnack: 200,
-                lunch: 600,
-                eveningSnack: 200,
-                dinner: 600
-            },
-            macroBudgets: {
-                protein: 150,
-                carbs: 200,
-                fat: 67
-            }
-        },
-        dailyMeals: {
-            breakfast: [],
-            morningSnack: [],
-            lunch: [],
-            eveningSnack: [],
-            dinner: []
+    // --- STATE MANAGEMENT ---
+
+    // Function to save the entire state to sessionStorage
+    function saveState() {
+        sessionStorage.setItem('calorieTrackerState', JSON.stringify(state));
+    }
+
+    // Function to load state from sessionStorage
+    function loadState() {
+        const savedState = sessionStorage.getItem('calorieTrackerState');
+        if (savedState) {
+            // Merge saved state with default to ensure new properties are added
+            const defaultState = getInitialState();
+            const loadedState = JSON.parse(savedState);
+            // Deep merge budgets
+            loadedState.budgets = {
+                ...defaultState.budgets,
+                ...loadedState.budgets,
+                mealBudgets: { ...defaultState.budgets.mealBudgets, ...loadedState.budgets.mealBudgets },
+                macroBudgets: { ...defaultState.budgets.macroBudgets, ...loadedState.budgets.macroBudgets },
+            };
+            return { ...defaultState, ...loadedState };
+        } else {
+            return getInitialState();
         }
-    };
+    }
+    
+    // Default state if nothing is saved
+    function getInitialState() {
+        return {
+            activeTab: 'log',
+            totalBurned: 0,
+            budgets: {
+                totalCalorieBudget: 2000,
+                burnGoal: 500,
+                tdee: 2500,
+                mealBudgets: {
+                    breakfast: 400,
+                    morningSnack: 200,
+                    lunch: 600,
+                    eveningSnack: 200,
+                    dinner: 600
+                },
+                macroBudgets: {
+                    protein: 150,
+                    carbs: 200,
+                    fat: 67,
+                    fiber: 30 // Added fiber
+                }
+            },
+            dailyMeals: {
+                breakfast: [],
+                morningSnack: [],
+                lunch: [],
+                eveningSnack: [],
+                dinner: []
+            }
+        };
+    }
+
+
+    // Initialize state by loading it
+    let state = loadState();
 
     // DOM Elements
     const dom = {
@@ -36,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         budgetView: document.getElementById('budget-view'),
         logTabBtn: document.getElementById('log-tab-btn'),
         budgetTabBtn: document.getElementById('budget-tab-btn'),
+        exportBtn: document.getElementById('export-btn'),
 
         // Summary
         totalCals: document.getElementById('total-cals'),
@@ -58,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         foodProteinInput: document.getElementById('food-protein-input'),
         foodCarbsInput: document.getElementById('food-carbs-input'),
         foodFatInput: document.getElementById('food-fat-input'),
+        foodFiberInput: document.getElementById('food-fiber-input'), // Added fiber input
         totalBurnedInput: document.getElementById('total-burned-input'),
 
         // Budget Page
@@ -77,28 +113,33 @@ document.addEventListener('DOMContentLoaded', () => {
             protein: document.getElementById('budget-protein'),
             carbs: document.getElementById('budget-carbs'),
             fat: document.getElementById('budget-fat'),
+            fiber: document.getElementById('budget-fiber') // Added fiber budget input
         }
     };
-    
+
     // --- RENDER FUNCTIONS ---
     
-    function render() {
-        // Calculations
-        let totalCals = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
+    function calculateTotals() {
+        let totalCals = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0, totalFiber = 0;
         for (const mealType in state.dailyMeals) {
             state.dailyMeals[mealType].forEach(food => {
                 totalCals += food.calories;
                 totalProtein += food.protein;
                 totalCarbs += food.carbs;
                 totalFat += food.fat;
+                totalFiber += food.fiber;
             });
         }
         const netCalories = totalCals - state.totalBurned;
         const calorieDeficit = state.budgets.tdee - netCalories;
+        return { totalCals, totalProtein, totalCarbs, totalFat, totalFiber, netCalories, calorieDeficit };
+    }
 
-        // Render everything
-        renderSummary(totalCals, netCalories, calorieDeficit);
-        renderMacros(totalProtein, totalCarbs, totalFat);
+    function render() {
+        const totals = calculateTotals();
+        
+        renderSummary(totals.totalCals, totals.netCalories, totals.calorieDeficit);
+        renderMacros(totals.totalProtein, totals.totalCarbs, totals.totalFat, totals.totalFiber);
         renderMeals();
         renderBudgets();
     }
@@ -107,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.totalCals.textContent = totalCals;
         dom.totalCalsBudget.textContent = state.budgets.totalCalorieBudget;
         dom.totalBurned.textContent = state.totalBurned;
+        dom.totalBurnedInput.value = state.totalBurned;
         dom.burnGoal.textContent = state.budgets.burnGoal;
         dom.netCalories.textContent = netCalories;
         dom.calorieDeficit.textContent = calorieDeficit;
@@ -120,8 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.calsBurnedPercent.textContent = `${Math.round(burnedPercent)}%`;
     }
 
-    function renderMacros(totalProtein, totalCarbs, totalFat) {
-        const macros = { protein: totalProtein, carbs: totalCarbs, fat: totalFat };
+    function renderMacros(totalProtein, totalCarbs, totalFat, totalFiber) {
+        const macros = { protein: totalProtein, carbs: totalCarbs, fat: totalFat, fiber: totalFiber };
         dom.macroSummary.innerHTML = '';
         for (const macro in state.budgets.macroBudgets) {
             const budget = state.budgets.macroBudgets[macro];
@@ -157,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 foodEl.innerHTML = `
                     <div>
                         <p class="name">${food.name}</p>
-                        <p class="macros">P: ${food.protein}g | C: ${food.carbs}g | F: ${food.fat}g</p>
+                        <p class="macros">P: ${food.protein}g | C: ${food.carbs}g | F: ${food.fat}g | Fb: ${food.fiber}g</p>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <span class="calories">${food.calories} cal</span>
@@ -167,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 mealListEl.appendChild(foodEl);
             });
 
-            // Update meal summary
             const budget = state.budgets.mealBudgets[mealType];
             document.getElementById(`${mealType}-cals`).textContent = `${mealTotalCals}/${budget} cal`;
             const progressEl = document.getElementById(`${mealType}-progress`);
@@ -178,15 +219,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function renderBudgets() {
-        dom.budgetInputs.totalCalorieBudget.value = state.budgets.totalCalorieBudget;
-        dom.budgetInputs.tdee.value = state.budgets.tdee;
-        dom.budgetInputs.burnGoal.value = state.budgets.burnGoal;
-
-        for (const meal in state.budgets.mealBudgets) {
-            dom.budgetInputs[meal].value = state.budgets.mealBudgets[meal];
-        }
-        for (const macro in state.budgets.macroBudgets) {
-            dom.budgetInputs[macro].value = state.budgets.macroBudgets[macro];
+        for (const key in dom.budgetInputs) {
+            if (state.budgets[key] !== undefined) {
+                dom.budgetInputs[key].value = state.budgets[key];
+            } else if (state.budgets.mealBudgets[key] !== undefined) {
+                dom.budgetInputs[key].value = state.budgets.mealBudgets[key];
+            } else if (state.budgets.macroBudgets[key] !== undefined) {
+                dom.budgetInputs[key].value = state.budgets.macroBudgets[key];
+            }
         }
     }
 
@@ -198,6 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.budgetView.classList.toggle('hidden', tab !== 'budget');
         dom.logTabBtn.classList.toggle('active', tab === 'log');
         dom.budgetTabBtn.classList.toggle('active', tab === 'budget');
+        saveState();
     }
 
     function handleAddFood(e) {
@@ -209,10 +250,12 @@ document.addEventListener('DOMContentLoaded', () => {
             protein: parseInt(dom.foodProteinInput.value) || 0,
             carbs: parseInt(dom.foodCarbsInput.value) || 0,
             fat: parseInt(dom.foodFatInput.value) || 0,
+            fiber: parseInt(dom.foodFiberInput.value) || 0 // Added fiber
         };
         const mealType = dom.foodMealSelect.value;
         state.dailyMeals[mealType].push(food);
         dom.addFoodForm.reset();
+        saveState();
         render();
     }
     
@@ -221,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const foodId = parseInt(e.target.dataset.id);
             const mealType = e.target.dataset.meal;
             state.dailyMeals[mealType] = state.dailyMeals[mealType].filter(food => food.id !== foodId);
+            saveState();
             render();
         }
     }
@@ -247,7 +291,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         handleToggleBudgetEdit(false);
+        saveState();
         render();
+    }
+
+    function handleExport() {
+        const totals = calculateTotals();
+        const dataForExport = [];
+
+        for (const mealType in state.dailyMeals) {
+            const mealName = mealType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+            state.dailyMeals[mealType].forEach(food => {
+                dataForExport.push({
+                    'Meal': mealName,
+                    'Food': food.name,
+                    'Calories': food.calories,
+                    'Protein (g)': food.protein,
+                    'Carbs (g)': food.carbs,
+                    'Fat (g)': food.fat,
+                    'Fiber (g)': food.fiber
+                });
+            });
+        }
+
+        dataForExport.push({});
+        dataForExport.push({ 'Meal': '--- DAILY SUMMARY ---' });
+        dataForExport.push({ 'Meal': 'Total Calories Eaten', 'Food': totals.totalCals });
+        dataForExport.push({ 'Meal': 'Total Protein (g)', 'Food': totals.totalProtein });
+        dataForExport.push({ 'Meal': 'Total Carbs (g)', 'Food': totals.totalCarbs });
+        dataForExport.push({ 'Meal': 'Total Fat (g)', 'Food': totals.totalFat });
+        dataForExport.push({ 'Meal': 'Total Fiber (g)', 'Food': totals.totalFiber });
+        dataForExport.push({ 'Meal': 'Calories Burned (Activity)', 'Food': state.totalBurned });
+        dataForExport.push({ 'Meal': 'Net Calories', 'Food': totals.netCalories });
+        dataForExport.push({ 'Meal': 'Calorie Deficit (from TDEE)', 'Food': totals.calorieDeficit });
+        
+        const worksheet = XLSX.utils.json_to_sheet(dataForExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Daily Calorie Log");
+
+        const today = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(workbook, `Calorie_Log_${today}.xlsx`);
     }
 
     // --- INITIALIZATION ---
@@ -256,22 +339,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // Setup Event Listeners
         dom.logTabBtn.addEventListener('click', () => switchTab('log'));
         dom.budgetTabBtn.addEventListener('click', () => switchTab('budget'));
+        dom.exportBtn.addEventListener('click', handleExport);
         dom.addFoodForm.addEventListener('submit', handleAddFood);
-        dom.logView.addEventListener('click', handleRemoveFood); // Event delegation for remove buttons
+        dom.logView.addEventListener('click', handleRemoveFood);
         dom.totalBurnedInput.addEventListener('change', (e) => {
             state.totalBurned = parseInt(e.target.value) || 0;
+            saveState();
             render();
         });
         
-        // Budget page listeners
         dom.editBudgetBtn.addEventListener('click', () => handleToggleBudgetEdit(true));
         dom.cancelBudgetBtn.addEventListener('click', () => {
             handleToggleBudgetEdit(false);
-            renderBudgets(); // Reset form to original state values
+            renderBudgets();
         });
         dom.saveBudgetBtn.addEventListener('click', handleSaveBudgets);
         
         // Initial Render
+        switchTab(state.activeTab);
         render();
     }
     
